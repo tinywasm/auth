@@ -9,10 +9,8 @@ import (
 
 func initSchema(db *orm.DB) error {
 	models := []model.Model{
-		&auth.User{}, &auth.Role{}, &auth.Permission{},
-		&auth.Identity{}, &auth.LANIP{},
-		&auth.OAuthState{}, &auth.UserRole{}, &auth.RolePermission{},
-		&auth.Session{},
+		&auth.User{}, &auth.Identity{}, &auth.LANIP{},
+		&auth.OAuthState{}, &auth.Session{},
 	}
 	ddlCompiler, ok := db.RawConn().(ddl.Compiler)
 	if !ok {

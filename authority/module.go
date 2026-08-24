@@ -110,8 +110,6 @@ func (m *Module) PurgeSessionsByUser(userID string) error {
 func (m *Module) Add() []any {
 	return []any{
 		&userCRUD{db: m.db, cache: m.ucache, ids: m.ids},
-		&roleCRUD{m: m},
-		&permissionCRUD{m: m},
 		&lanipCRUD{m: m},
 	}
 }

@@ -481,9 +481,9 @@ func TestCoverage_OAuthTokenDecode(t *testing.T) {
 
 func TestCoverage_GeneratedTypes(t *testing.T) {
 	models := []model.Model{
-		&auth.User{}, &auth.Role{}, &auth.Permission{},
+		&auth.User{},
 		&auth.Identity{}, &auth.LANIP{},
-		&auth.OAuthState{}, &auth.UserRole{}, &auth.RolePermission{},
+		&auth.OAuthState{},
 		&auth.Session{},
 	}
 	for _, m := range models {
@@ -498,9 +498,9 @@ func TestCoverage_GeneratedTypes(t *testing.T) {
 	}
 
 	lists := []model.ModelSlice{
-		&auth.UserList{}, &auth.RoleList{}, &auth.PermissionList{},
+		&auth.UserList{},
 		&auth.IdentityList{}, &auth.LANIPList{},
-		&auth.OAuthStateList{}, &auth.UserRoleList{}, &auth.RolePermissionList{},
+		&auth.OAuthStateList{},
 		&auth.SessionList{},
 	}
 	for _, l := range lists {

@@ -60,33 +60,31 @@ func Example_mustCompile() {
 	// 7. Monta las rutas de user y arranca el servidor. El Router concreto lo crea
 	//    httpd, no el paquete router. Authn corre el middleware de identidad de forma
 	//    global; Authorize es el gate RBAC de las rutas que declaran .Requires(...).
+	//    authority nunca decide permisos — eso vive en github.com/tinywasm/rbac
+	//    (rbac.Service.Can), inyectado aquí como Authorize; se omite construirlo
+	//    en este ejemplo para no acoplarlo a esa librería hermana.
 	srv := httpd.New(httpd.Config{
-		Port:      "8080",
-		Authn:     m.Authenticate(), // router.Middleware: identifica al usuario, inyecta su ID en el ctx
-		Authorize: m.Can,            // model.Authorizer: RBAC
+		Port:  "8080",
+		Authn: m.Authenticate(), // router.Middleware: identifica al usuario, inyecta su ID en el ctx
+		Authorize: func(userID string, resource model.Resource, action model.Action) bool {
+			return false // en una app real: rbac.Service.Can
+		},
 	}).Mount(m) // m es un router.APIModule → monta POST /login, /logout, /login/rut
 
 	// 8. Ruta propia protegida: se registra en el Router del server y declara su
-	//    permiso; el Authorize lo hace cumplir (o se chequea m.Can a mano dentro).
+	//    permiso; el Authorize configurado arriba lo hace cumplir.
 	srv.Router().Get("/api/dashboard", func(ctx router.Context) {
-		if !m.Can(ctx.UserID(), "reports", model.Read) {
-			ctx.WriteStatus(403)
-			return
-		}
 		ctx.Write([]byte("Welcome to reports dashboard"))
 	}).Requires("reports", model.Read)
 
-	// 9. Bootstrap / Seed first administrator user
-	err = m.Bootstrap(authority.Seed{
-		Email:    "admin@company.com",
-		Password: "super-secure-admin-password",
-		Name:     "Administrator",
-		Role:     "admin",
-		Grants: []model.Grant{
-			{Resource: model.Wildcard, Actions: model.AllActions}, // full permissions
-		},
-	})
+	// 9. Seed the first administrator's identity. Roles/permissions are a
+	// separate concern: create them with rbac.Service (github.com/tinywasm/rbac)
+	// and rb.AssignRole(admin.Id, roleID) — authority only ever creates the user.
+	admin, err := m.CreateUser("admin@company.com", "Administrator", "")
 	if err != nil {
+		panic(err)
+	}
+	if err := m.SetPassword(admin.Id, "super-secure-admin-password"); err != nil {
 		panic(err)
 	}
 }

@@ -22,9 +22,8 @@ func TestProductionWiring(t *testing.T) {
 
 	t.Run("Widgets", testWidgets)
 	t.Run("ConsumerViewSSR", testConsumerViewSSR)
-	t.Run("Bootstrap", testBootstrap)
 	t.Run("MountAPI", testMountAPI)
-	t.Run("MeToolPermissions", testMeToolPermissions)
+	t.Run("MeTool", testMeTool)
 }
 
 // testConsumerViewSSR plays the role of a consumer app building its own
@@ -72,43 +71,6 @@ func testWidgets(t *testing.T) {
 	}
 }
 
-func testBootstrap(t *testing.T) {
-	db := newTestDB(t)
-	m, err := authority.New(db, auth.Config{IDs: testIDs})
-	if err != nil {
-		t.Fatal(err)
-	}
-	m.Enable(emailpassword.New(m, m, m))
-
-	email := "admin@test.com"
-	pass := "password123"
-
-	if err := m.Bootstrap(authority.Seed{Email: email, Password: pass, Name: "Admin", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
-		t.Fatalf("Bootstrap failed: %v", err)
-	}
-
-	u, err := m.Login(email, pass)
-	if err != nil {
-		t.Fatalf("Admin login failed: %v", err)
-	}
-
-	ok := m.Can(u.Id, model.Resource("any_resource"), model.Read)
-	if !ok {
-		t.Errorf("Admin should have wildcard permissions")
-	}
-
-	if err := m.Bootstrap(authority.Seed{Email: email, Password: pass, Name: "Admin", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
-		t.Fatalf("Bootstrap second call failed: %v", err)
-	}
-
-	db2 := newTestDB(t)
-	m2, _ := authority.New(db2, auth.Config{IDs: testIDs})
-	m2.Enable(emailpassword.New(m2, m2, m2))
-	if err := m2.Bootstrap(authority.Seed{}); err == nil {
-		t.Errorf("Bootstrap with empty credentials on empty DB should fail")
-	}
-}
-
 func testMountAPI(t *testing.T) {
 	db := newTestDB(t)
 	m, err := authority.New(db, auth.Config{
@@ -122,7 +84,11 @@ func testMountAPI(t *testing.T) {
 
 	email := "user@test.com"
 	pass := "password123"
-	if err := m.Bootstrap(authority.Seed{Email: email, Password: pass, Name: "Admin", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
+	admin, err := m.CreateUser(email, "Admin", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.SetPassword(admin.Id, pass); err != nil {
 		t.Fatal(err)
 	}
 
@@ -191,18 +157,16 @@ func testMountAPI(t *testing.T) {
 	}
 }
 
-func testMeToolPermissions(t *testing.T) {
+// testMeTool verifies the "me" op returns the identity fields authority
+// owns. Permissions/Roles are intentionally absent: authority never
+// resolves RBAC (see ARCHITECTURE.md) — a consumer that needs them in the
+// same response composes this with rbac.Service in its own handler.
+func testMeTool(t *testing.T) {
 	db := newTestDB(t)
 	m, _ := authority.New(db, auth.Config{IDs: testIDs})
 
 	email := "tools@test.com"
-	pass := "password123"
-
-	if err := m.Bootstrap(authority.Seed{Email: email, Password: pass, Name: "Admin", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
-		t.Fatal(err)
-	}
-
-	uObj, err := m.GetUserByEmail(email)
+	uObj, err := m.CreateUser(email, "Tools", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +189,10 @@ func testMeToolPermissions(t *testing.T) {
 		t.Fatalf("failed to decode profile: %v", err)
 	}
 
-	if len(profile.Permissions) != 1 || profile.Permissions[0] != "*:crud" {
-		t.Errorf("expected permission '*:crud', got %v", profile.Permissions)
+	if profile.Id != uObj.Id || profile.Email != email {
+		t.Errorf("expected profile for %s, got %+v", email, profile)
+	}
+	if len(profile.Permissions) != 0 {
+		t.Errorf("expected no permissions from authority alone, got %v", profile.Permissions)
 	}
 }

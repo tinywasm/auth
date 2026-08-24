@@ -13,59 +13,6 @@ import (
 	"github.com/tinywasm/auth/session/jwt"
 )
 
-func TestRBAC_ClosedByDefault(t *testing.T) {
-	db := newTestDB(t)
-	m, err := authority.New(db, auth.Config{IDs: testIDs})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Run("Anonymous has no permissions", func(t *testing.T) {
-		if m.Can("", "any", model.Read) {
-			t.Error("anonymous user should have no permissions")
-		}
-	})
-
-	t.Run("User without roles has no permissions", func(t *testing.T) {
-		userCRUD := getHandler(m, "users")
-		res, err := userCRUD.Create(auth.User{Email: "norole@test.com", Name: "No Role"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		u := res.(auth.User)
-
-		if m.Can(u.Id, "docs", model.Read) {
-			t.Error("user without roles should have no permissions")
-		}
-	})
-
-	t.Run("Permissions work after seeding", func(t *testing.T) {
-		userCRUD := getHandler(m, "users")
-		res, _ := userCRUD.Create(auth.User{Email: "withrole@test.com", Name: "With Role"})
-		u := res.(auth.User)
-
-		if err := m.CreateRole("r1", "editor", "Editor", ""); err != nil {
-			t.Fatal(err)
-		}
-		if err := m.CreatePermission("p1", "Read", "docs", model.Read); err != nil {
-			t.Fatal(err)
-		}
-		if err := m.AssignPermission("r1", "p1"); err != nil {
-			t.Fatal(err)
-		}
-		if err := m.AssignRole(u.Id, "r1"); err != nil {
-			t.Fatal(err)
-		}
-
-		if !m.Can(u.Id, "docs", model.Read) {
-			t.Error("expected true for assigned permission")
-		}
-		if m.Can(u.Id, "docs", model.Update) {
-			t.Error("expected false for unassigned action")
-		}
-	})
-}
-
 func TestTools_Me(t *testing.T) {
 	db := newTestDB(t)
 	m, _ := authority.New(db, auth.Config{IDs: testIDs})

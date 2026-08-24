@@ -65,46 +65,6 @@ func (c *userCache) Delete(id string) {
 	}
 }
 
-func (c *userCache) InvalidateByRole(roleID string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	var active []userCacheItem
-	for _, item := range c.items {
-		hasRole := false
-		for _, r := range item.val.Roles {
-			if r.Id == roleID {
-				hasRole = true
-				break
-			}
-		}
-		if !hasRole {
-			active = append(active, item)
-		}
-	}
-	c.items = active
-}
-
-func (c *userCache) InvalidateByPermission(permID string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	var active []userCacheItem
-	for _, item := range c.items {
-		hasPerm := false
-		for _, p := range item.val.Permissions {
-			if p.Id == permID {
-				hasPerm = true
-				break
-			}
-		}
-		if !hasPerm {
-			active = append(active, item)
-		}
-	}
-	c.items = active
-}
-
 func (c *userCache) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()

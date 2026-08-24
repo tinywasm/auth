@@ -31,77 +31,6 @@ func createUser(db *orm.DB, ids model.IDGenerator, email, name, phone string) (a
 	return newUser, nil
 }
 
-func hydrateUser(db *orm.DB, u *auth.User) error {
-	// 1. Fetch UserRoles to get Role IDs
-	qbUserRoles := db.Query(&auth.UserRole{}).Where(auth.UserRole_.UserId).Eq(u.Id)
-	userRoles, err := auth.ReadAllUserRole(qbUserRoles)
-	if err != nil {
-		return err
-	}
-
-	var roleIDs []any
-	for _, ur := range userRoles {
-		roleIDs = append(roleIDs, ur.RoleId)
-	}
-
-	if len(roleIDs) > 0 {
-		// 2. Fetch Roles
-		qbRoles := db.Query(&auth.Role{}).Where(auth.Role_.Id).In(roleIDs)
-		roles, err := auth.ReadAllRole(qbRoles)
-		if err != nil {
-			return err
-		}
-		u.Roles = make([]auth.Role, len(roles))
-		for i, r := range roles {
-			u.Roles[i] = *r
-		}
-
-		// 3. Fetch RolePermissions to get Permission IDs
-		qbRolePerms := db.Query(&auth.RolePermission{}).Where(auth.RolePermission_.RoleId).In(roleIDs)
-		rolePerms, err := auth.ReadAllRolePermission(qbRolePerms)
-		if err != nil {
-			return err
-		}
-
-		var permIDs []any
-		for _, rp := range rolePerms {
-			permIDs = append(permIDs, rp.PermissionId)
-		}
-
-		if len(permIDs) > 0 {
-			// 4. Fetch Permissions
-			qbPerms := db.Query(&auth.Permission{}).Where(auth.Permission_.Id).In(permIDs)
-			perms, err := auth.ReadAllPermission(qbPerms)
-			if err != nil {
-				return err
-			}
-
-			// Deduplicate permissions using slice lookup (no map)
-			var uniquePerms []auth.Permission
-			for _, p := range perms {
-				exists := false
-				for _, up := range uniquePerms {
-					if up.Id == p.Id {
-						exists = true
-						break
-					}
-				}
-				if !exists {
-					uniquePerms = append(uniquePerms, *p)
-				}
-			}
-			u.Permissions = uniquePerms
-		} else {
-			u.Permissions = []auth.Permission{}
-		}
-	} else {
-		u.Roles = []auth.Role{}
-		u.Permissions = []auth.Permission{}
-	}
-
-	return nil
-}
-
 func (m *Module) GetUser(id string) (auth.User, error) {
 	return getUser(m.db, m.ucache, id)
 }
@@ -122,10 +51,6 @@ func getUser(db *orm.DB, cache *userCache, id string) (auth.User, error) {
 		return auth.User{}, auth.ErrNotFound
 	}
 	u := results[0]
-
-	if err := hydrateUser(db, u); err != nil {
-		return auth.User{}, err
-	}
 
 	if cache != nil {
 		cache.Set(u.Id, u)
@@ -148,13 +73,6 @@ func getUserByEmail(db *orm.DB, cache *userCache, email string) (auth.User, erro
 		if cached, ok := cache.Get(u.Id); ok {
 			return *cached, nil
 		}
-	}
-
-	if err := hydrateUser(db, u); err != nil {
-		return auth.User{}, err
-	}
-
-	if cache != nil {
 		cache.Set(u.Id, u)
 	}
 	return *u, nil
@@ -223,10 +141,9 @@ func listUsers(db *orm.DB) ([]auth.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	var res []auth.User
-	for _, u := range users {
-		hydrateUser(db, u)
-		res = append(res, *u)
+	res := make([]auth.User, len(users))
+	for i, u := range users {
+		res[i] = *u
 	}
 	return res, nil
 }

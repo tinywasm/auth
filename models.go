@@ -15,8 +15,6 @@ var UserModel = model.Definition{
 		{Name: "status", Type: model.Text()},
 		{Name: "avatar", Type: model.Text()},
 		{Name: "created_at", Type: model.Int()},
-		{Name: "roles", Type: model.StructSlice(&RoleModel), Exclude: true},
-		{Name: "permissions", Type: model.StructSlice(&PermissionModel), Exclude: true},
 	},
 }
 
@@ -41,42 +39,6 @@ var IdentityModel = model.Definition{
 		{Name: "provider_id", Type: model.Text()},
 		{Name: "email", Type: model.Text()},
 		{Name: "created_at", Type: model.Int()},
-	},
-}
-
-var RoleModel = model.Definition{
-	Name: "role",
-	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}},
-		{Name: "code", Type: model.Text()},
-		{Name: "name", Type: model.Text()},
-		{Name: "description", Type: model.Text()},
-	},
-}
-
-var UserRoleModel = model.Definition{
-	Name: "user_role",
-	Fields: model.Fields{
-		{Name: "user_id", Type: model.Text(), DB: &model.FieldDB{PK: true, RefColumn: "id"}, Ref: &UserModel},
-		{Name: "role_id", Type: model.Text(), DB: &model.FieldDB{PK: true, RefColumn: "id"}, Ref: &RoleModel},
-	},
-}
-
-var PermissionModel = model.Definition{
-	Name: "permission",
-	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}},
-		{Name: "name", Type: model.Text()},
-		{Name: "resource", Type: model.Text()},
-		{Name: "action", Type: model.Text()}, // stores CRUD letters ("crud", "r", "ru", ...)
-	},
-}
-
-var RolePermissionModel = model.Definition{
-	Name: "role_permission",
-	Fields: model.Fields{
-		{Name: "role_id", Type: model.Text(), DB: &model.FieldDB{PK: true, RefColumn: "id"}, Ref: &RoleModel},
-		{Name: "permission_id", Type: model.Text(), DB: &model.FieldDB{PK: true, RefColumn: "id"}, Ref: &PermissionModel},
 	},
 }
 

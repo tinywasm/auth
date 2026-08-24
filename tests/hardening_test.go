@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/tinywasm/json"
-	"github.com/tinywasm/model"
 	"github.com/tinywasm/router"
 	"github.com/tinywasm/router/mock"
 	"github.com/tinywasm/auth"
@@ -52,7 +51,11 @@ func TestCookieSecurity(t *testing.T) {
 		}
 		m.Enable(emailpassword.New(m, m, m))
 		email, pass := "cookie1@example.com", "password123"
-		if err := m.Bootstrap(authority.Seed{Email: email, Password: pass, Name: "Admin", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
+		admin, err := m.CreateUser(email, "Admin", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := m.SetPassword(admin.Id, pass); err != nil {
 			t.Fatal(err)
 		}
 
@@ -91,7 +94,11 @@ func TestCookieSecurity(t *testing.T) {
 		m.SetStrategy(strategy)
 		m.Enable(emailpassword.New(m, m, m))
 		email, pass := "cookie2@example.com", "password123"
-		if err := m.Bootstrap(authority.Seed{Email: email, Password: pass, Name: "Admin", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
+		admin, err := m.CreateUser(email, "Admin", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := m.SetPassword(admin.Id, pass); err != nil {
 			t.Fatal(err)
 		}
 
@@ -115,7 +122,11 @@ func TestCookieSecurity(t *testing.T) {
 		}
 		m.Enable(emailpassword.New(m, m, m))
 		email, pass := "cookie3@example.com", "password123"
-		if err := m.Bootstrap(authority.Seed{Email: email, Password: pass, Name: "Admin", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
+		admin, err := m.CreateUser(email, "Admin", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := m.SetPassword(admin.Id, pass); err != nil {
 			t.Fatal(err)
 		}
 

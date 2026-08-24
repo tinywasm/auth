@@ -5,7 +5,6 @@ package tests
 import (
 	"testing"
 
-	"github.com/tinywasm/orm"
 	"github.com/tinywasm/auth"
 	"github.com/tinywasm/auth/authority"
 )
@@ -52,13 +51,6 @@ func TestSQLBoundary(t *testing.T) {
 		_, err := m.GetUser("1 UNION SELECT * FROM user_identities")
 		if err != auth.ErrNotFound {
 			t.Errorf("expected ErrNotFound, got %v", err)
-		}
-	})
-
-	t.Run("GetRoleByCode Injection", func(t *testing.T) {
-		_, err := m.GetRoleByCode("admin' OR '1'='1")
-		if err != orm.ErrNotFound {
-			t.Errorf("expected orm.ErrNotFound, got %v", err)
 		}
 	})
 }

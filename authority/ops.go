@@ -26,12 +26,11 @@ func (m *Module) opMe(ctx router.Context) {
 		ctx.WriteStatus(404)
 		return
 	}
+	// Roles/Permissions se quedan sin poblar aquí a propósito: authority no
+	// conoce RBAC (ver ARCHITECTURE.md). Un consumidor que necesite el
+	// perfil completo lo compone en su propia raíz de composición, uniendo
+	// esto con rbac.Service.
 	profile := auth.ProfileDTO{Id: u.Id, Name: u.Name, Email: u.Email, Avatar: u.Avatar}
-	for _, r := range u.Roles {
-		profile.Roles = append(profile.Roles, r.Code)
-		profile.RoleNames = append(profile.RoleNames, r.Name)
-	}
-	profile.Permissions = permissionsOf(u)
 	if err := ctx.Encode(&profile); err != nil {
 		ctx.WriteStatus(500)
 	}
@@ -80,10 +79,3 @@ func (m *Module) opDeleteUser(ctx router.Context) {
 	}
 }
 
-func permissionsOf(u auth.User) []string {
-	var perms []string
-	for _, p := range u.Permissions {
-		perms = append(perms, p.Resource+":"+p.Action)
-	}
-	return perms
-}

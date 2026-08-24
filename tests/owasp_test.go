@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/tinywasm/json"
-	"github.com/tinywasm/model"
 	"github.com/tinywasm/router/mock"
 	"github.com/tinywasm/auth"
 	"github.com/tinywasm/auth/authority"
@@ -20,16 +19,23 @@ func TestOWASP(t *testing.T) {
 
 	email := "active@test.com"
 	pass := "password123"
-	if err := m.Bootstrap(authority.Seed{Email: email, Password: pass, Name: "Admin", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
+	admin, err := m.CreateUser(email, "Admin", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.SetPassword(admin.Id, pass); err != nil {
 		t.Fatal(err)
 	}
 
 	suspended := "suspended@test.com"
-	if err := m.Bootstrap(authority.Seed{Email: suspended, Password: pass, Name: "Suspended", Role: "admin", Grants: []model.Grant{{Resource: model.Wildcard, Actions: model.AllActions}}}); err != nil {
+	uSuspNew, err := m.CreateUser(suspended, "Suspended", "")
+	if err != nil {
 		t.Fatal(err)
 	}
-	uSusp, _ := m.GetUserByEmail(suspended)
-	m.SuspendUser(uSusp.Id)
+	if err := m.SetPassword(uSuspNew.Id, pass); err != nil {
+		t.Fatal(err)
+	}
+	m.SuspendUser(uSuspNew.Id)
 
 	t.Run("Uniform 401 Responses", func(t *testing.T) {
 		r := &mock.Router{}
