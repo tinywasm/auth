@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/crypto v0.0.25
-	github.com/tinywasm/ddl v0.0.11
+	github.com/tinywasm/ddl v0.0.12
 	github.com/tinywasm/events v0.0.2
 	github.com/tinywasm/fetch v0.1.27
 	github.com/tinywasm/fmt v0.25.7
