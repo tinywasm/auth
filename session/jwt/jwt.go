@@ -25,8 +25,11 @@ type Strategy struct {
 	ttl        int
 	bearer     bool
 	cookieName string
-	notify     auth.SecurityNotifier
-	users      auth.IdentityStore
+	domain     string // "" (default) = cookie scoped to the exact host, unchanged
+	// behavior. A non-empty value (e.g. ".velty.cl") shares the cookie across
+	// subdomains of that parent domain — set via WithDomain.
+	notify auth.SecurityNotifier
+	users  auth.IdentityStore
 }
 
 // New builds a JWT strategy. Fails fast if secret is empty — a JWT strategy with
@@ -48,6 +51,13 @@ func (s *Strategy) WithCookieName(name string) *Strategy { s.cookieName = name; 
 // clients (MCP servers, IDEs, LLMs) that cannot use cookies.
 func (s *Strategy) AsBearer() *Strategy { s.bearer = true; return s }
 
+// WithDomain sets the cookie's Domain attribute — for a session meant to be
+// shared across subdomains of a parent domain (e.g. ".velty.cl"). Ignored in
+// bearer mode (no cookie is set). Empty string (default) leaves Domain
+// unset: the browser scopes the cookie to the exact host that issued it,
+// unchanged from before this method existed.
+func (s *Strategy) WithDomain(domain string) *Strategy { s.domain = domain; return s }
+
 func (s *Strategy) Issue(ctx router.Context, userID string) error {
 	token, err := s.sign(userID, s.ttl)
 	if err != nil {
@@ -57,7 +67,7 @@ func (s *Strategy) Issue(ctx router.Context, userID string) error {
 		return ctx.Encode(&tokenResponse{Token: token})
 	}
 	ctx.SetCookie(router.Cookie{
-		Name: s.cookieName, Value: token, HttpOnly: true, Secure: true,
+		Name: s.cookieName, Value: token, Domain: s.domain, HttpOnly: true, Secure: true,
 		SameSite: router.SameSiteStrict, MaxAge: s.ttl, Path: "/",
 	})
 	return nil
@@ -106,7 +116,7 @@ func (s *Strategy) Revoke(ctx router.Context) error {
 	if s.bearer {
 		return nil // stateless: nothing to revoke server-side
 	}
-	ctx.SetCookie(router.Cookie{Name: s.cookieName, Value: "", Path: "/", MaxAge: -1, HttpOnly: true})
+	ctx.SetCookie(router.Cookie{Name: s.cookieName, Value: "", Domain: s.domain, Path: "/", MaxAge: -1, HttpOnly: true})
 	return nil
 }
 
