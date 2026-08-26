@@ -197,7 +197,7 @@ func ClientIP(ctx router.Context, trustProxy bool) string {
 			return fmt.Convert(xri).TrimSpace().String()
 		}
 	}
-	if addr, ok := ctx.Value("RemoteAddr").(string); ok {
+	if addr := ctx.Value("RemoteAddr"); addr != "" {
 		parts := fmt.Split(addr, ":")
 		if len(parts) > 0 {
 			return parts[0]
