@@ -3,6 +3,7 @@
 package tests
 
 import (
+	"github.com/tinywasm/ddl"
 	"github.com/tinywasm/model"
 	"github.com/tinywasm/orm"
 	"github.com/tinywasm/router"
@@ -30,7 +31,10 @@ func Example_mustCompile() {
 		panic(err)
 	}
 
-	// 3. Initialize the pure authority orchestrator
+	// 3. Migrate schema and initialize the pure authority orchestrator
+	if err := authority.Migrate(db.RawConn(), db.RawConn().(ddl.Compiler)); err != nil {
+		panic(err)
+	}
 	m, err := authority.New(db, auth.Config{
 		IDs:        ids,
 		CookieName: "session",

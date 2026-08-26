@@ -37,6 +37,7 @@ scenarios := []local.Scenario{
     {ID: "user_admin", Name: "Alice", Email: "alice@example.com", Avatar: "", Roles: []string{"Administrator"}},
     {ID: "user_viewer", Name: "Bob", Email: "bob@example.com", Avatar: "", Roles: []string{"Viewer"}},
 }
+_ = authority.Migrate(db.RawConn(), db.RawConn().(ddl.Compiler))
 authMod, _ := authority.New(db, auth.Config{IDs: ids})
 rbacSvc, _ := rbac.New(db)
 // seed subjects and assignments via rbac before mounting

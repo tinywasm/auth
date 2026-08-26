@@ -35,7 +35,9 @@ Rules:
   (`SubjectStore`, `SessionIssuer`, `IdentityStore`, `StateStore`,
   `SecurityNotifier`, `SessionRepo`).
 - `authority`: concrete `Module` implementing the ports; owns `user`, `session`,
-  `identity`, `lanip`, `oauth_state` tables and the session cache.
+  `identity`, `lanip`, `oauth_state` tables and the session cache. Schema DDL is
+  reconciled explicitly via `authority.Migrate` at deploy time; `New` assumes
+  the schema already exists.
 - `oauth2`: OAuth authorization-code flow (begin/callback, state handling).
 - `oauth2/provider/*`: concrete Google and Microsoft protocol adapters.
 - `session/*`: concrete session transports (`cookie`, `jwt`).
