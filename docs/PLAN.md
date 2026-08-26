@@ -2,6 +2,8 @@
 PLAN: "perf!: authority.New deja de escanear la tabla de sesiones en cada arranque"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 11500381658416316312
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
