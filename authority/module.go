@@ -25,9 +25,14 @@ type Module struct {
 	authenticators []auth.Authenticator
 }
 
-// New initializes the schema, warms the session cache, and wires the default
-// session strategy (an opaque cookie over this Module's own session table).
-// Call SetStrategy/Enable afterward to customize.
+// New conecta la estrategia de sesion por defecto (una cookie opaca sobre la
+// tabla de sesiones de este Module) y devuelve el modulo listo para usar.
+//
+// A proposito NO consulta la base. El esquema lo aplica Migrate, una vez en
+// tiempo de despliegue, y el cache de sesiones es de lectura-a-traves:
+// GetSession resuelve un fallo consultando esa sesion por id. Precalentarlo
+// costaria un escaneo completo de la tabla en cada arranque de isolate, que en
+// un Worker se paga muchas veces y no se amortiza nunca.
 func New(db *orm.DB, cfg auth.Config) (*Module, error) {
 	if cfg.IDs == nil {
 		return nil, fmt.Err("user:", "Config.IDs", "is", "required")
@@ -49,9 +54,6 @@ func New(db *orm.DB, cfg auth.Config) (*Module, error) {
 	}
 	m.strategy = cookie.New(m, cfg.CookieName, cfg.TokenTTL, cfg.TrustProxy)
 
-	if err := m.cache.warmUp(db); err != nil {
-		return nil, err
-	}
 	return m, nil
 }
 
