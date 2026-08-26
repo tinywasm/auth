@@ -49,9 +49,6 @@ func New(db *orm.DB, cfg auth.Config) (*Module, error) {
 	}
 	m.strategy = cookie.New(m, cfg.CookieName, cfg.TokenTTL, cfg.TrustProxy)
 
-	if err := initSchema(db); err != nil {
-		return nil, err
-	}
 	if err := m.cache.warmUp(db); err != nil {
 		return nil, err
 	}

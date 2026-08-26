@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tinywasm/crypto/bcrypt"
+	"github.com/tinywasm/ddl"
 	tinyjwt "github.com/tinywasm/jwt"
 	"github.com/tinywasm/orm"
 	"github.com/tinywasm/router"
@@ -28,7 +29,11 @@ func newTestDB(t *testing.T) *orm.DB {
 	t.Cleanup(func() {
 		conn.Close()
 	})
-	return orm.New(conn)
+	db := orm.New(conn)
+	if err := authority.Migrate(db.RawConn(), db.RawConn().(ddl.Compiler)); err != nil {
+		t.Fatalf("failed to migrate schema: %v", err)
+	}
+	return db
 }
 
 func RunUserTests(t *testing.T) {
