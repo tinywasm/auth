@@ -2,8 +2,9 @@
 PLAN: "feat!: Migrate is explicit — authority.New stops running schema DDL"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 3644196144230114495
+PR: https://github.com/tinywasm/auth/pull/1
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
