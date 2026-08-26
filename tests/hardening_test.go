@@ -8,8 +8,10 @@ import (
 	"testing"
 
 	"github.com/tinywasm/json"
+	"github.com/tinywasm/orm"
 	"github.com/tinywasm/router"
 	"github.com/tinywasm/router/mock"
+	"github.com/tinywasm/sqlite"
 	"github.com/tinywasm/auth"
 	"github.com/tinywasm/auth/authority"
 	emailpassword "github.com/tinywasm/auth/email_password"
@@ -136,6 +138,30 @@ func TestCookieSecurity(t *testing.T) {
 			t.Errorf("expected cookie name 'custom_auth', got %s", c.Name)
 		}
 	})
+}
+
+// TestNewDoesNotQueryOnConstruction prueba que construir el modulo no toca la
+// base: es la regresion que este plan cierra, y en un Worker cada isolate la
+// pagaba entera.
+func TestNewDoesNotQueryOnConstruction(t *testing.T) {
+	conn, err := sqlite.Open(":memory:")
+	if err != nil {
+		t.Fatalf("failed to open db: %v", err)
+	}
+	defer conn.Close()
+	db := orm.New(conn)
+
+	// Do NOT run authority.Migrate — the 'session' table does not exist.
+	m, err := authority.New(db, auth.Config{IDs: testIDs})
+	if err != nil {
+		t.Fatalf("authority.New failed on unmigrated DB: %v", err)
+	}
+
+	// Calling GetSession will fail because the 'session' table does not exist in the unmigrated DB.
+	_, err = m.GetSession("some-id")
+	if err == nil {
+		t.Errorf("expected GetSession to fail on unmigrated DB")
+	}
 }
 
 func TestSessionRotation(t *testing.T) {

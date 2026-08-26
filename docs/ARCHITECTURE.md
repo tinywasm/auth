@@ -35,9 +35,11 @@ Rules:
   (`SubjectStore`, `SessionIssuer`, `IdentityStore`, `StateStore`,
   `SecurityNotifier`, `SessionRepo`).
 - `authority`: concrete `Module` implementing the ports; owns `user`, `session`,
-  `identity`, `lanip`, `oauth_state` tables and the session cache. Schema DDL is
-  reconciled explicitly via `authority.Migrate` at deploy time; `New` assumes
-  the schema already exists.
+  `identity`, `lanip`, `oauth_state` tables and the session cache. The session cache
+  is strictly read-through (`GetSession` loads on miss) and is intentionally not
+  pre-warmed on module construction to avoid costly table scans in short-lived isolate
+  environments. Schema DDL is reconciled explicitly via `authority.Migrate` at deploy
+  time; `New` assumes the schema already exists and performs no database queries.
 - `oauth2`: OAuth authorization-code flow (begin/callback, state handling).
 - `oauth2/provider/*`: concrete Google and Microsoft protocol adapters.
 - `session/*`: concrete session transports (`cookie`, `jwt`).

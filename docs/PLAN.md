@@ -2,8 +2,9 @@
 PLAN: "perf!: authority.New deja de escanear la tabla de sesiones en cada arranque"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 11500381658416316312
+PR: https://github.com/tinywasm/auth/pull/2
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.

@@ -25,22 +25,6 @@ func newSessionCache() *sessionCache {
 	}
 }
 
-func (c *sessionCache) warmUp(db *orm.DB) error {
-	qb := db.Query(&auth.Session{}).Where(auth.Session_.ExpiresAt).Gt(time.Now() / 1e9)
-	sessions, err := auth.ReadAllSession(qb)
-	if err != nil {
-		return err
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	for _, s := range sessions {
-		c.items = append(c.items, sessionItem{key: s.Id, val: *s})
-	}
-	return nil
-}
-
 func (c *sessionCache) set(id string, s auth.Session) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
