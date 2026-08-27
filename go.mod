@@ -14,8 +14,8 @@ require (
 	github.com/tinywasm/jwt v0.1.16
 	github.com/tinywasm/model v0.1.7
 	github.com/tinywasm/orm v0.11.10
-	github.com/tinywasm/router v0.1.28
-	github.com/tinywasm/server v0.2.42
+	github.com/tinywasm/router v0.1.29
+	github.com/tinywasm/server v0.2.43
 	github.com/tinywasm/sqlite v0.3.2
 	github.com/tinywasm/time v0.5.3
 	github.com/tinywasm/unixid v0.2.26
