@@ -12,7 +12,7 @@ require (
 	github.com/tinywasm/input v0.0.5
 	github.com/tinywasm/json v0.5.23
 	github.com/tinywasm/jwt v0.1.16
-	github.com/tinywasm/model v0.1.6
+	github.com/tinywasm/model v0.1.7
 	github.com/tinywasm/orm v0.11.10
 	github.com/tinywasm/router v0.1.28
 	github.com/tinywasm/server v0.2.42
