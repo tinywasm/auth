@@ -34,7 +34,7 @@ require (
 	github.com/tinywasm/base64 v0.0.5 // indirect
 	github.com/tinywasm/dom v0.13.5 // indirect
 	github.com/tinywasm/sqlt v0.0.8 // indirect
-	github.com/tinywasm/storage v0.0.5 // indirect
+	github.com/tinywasm/storage v0.0.6 // indirect
 	github.com/tinywasm/widget v0.6.17 // indirect
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/net v0.57.0 // indirect

@@ -49,8 +49,8 @@ github.com/tinywasm/sqlite v0.3.2 h1:n0ET3Z+zCzu1aF0wV83X0+tYwsRZ08xWmVGi3WG67sc
 github.com/tinywasm/sqlite v0.3.2/go.mod h1:j6LyHsD3FqwJExmZfrhNoQ7A7wXCeTqzY04FvDcIkro=
 github.com/tinywasm/sqlt v0.0.8 h1:yu+9e/4djfTqkC53x5iyzJBBGcoFKvafYDtWv3J08s0=
 github.com/tinywasm/sqlt v0.0.8/go.mod h1:03pCtZV/rlsb0BiF3OfbX/pNGM7DRiWincYyD+c6uDA=
-github.com/tinywasm/storage v0.0.5 h1:HqK80RrbcGi/D1PcWP9o8MpJZK20w0TLGSHxtaiH9xc=
-github.com/tinywasm/storage v0.0.5/go.mod h1:C0aOrbutiiLKSL1WLc5hvAiEB4+v0BLh0Jv+W07YxzQ=
+github.com/tinywasm/storage v0.0.6 h1:oVq7M2DtgOAbVaforOfqldMJanuXXCWSzGPFuLREWmo=
+github.com/tinywasm/storage v0.0.6/go.mod h1:C0aOrbutiiLKSL1WLc5hvAiEB4+v0BLh0Jv+W07YxzQ=
 github.com/tinywasm/time v0.5.3 h1:wGt0cJENvac2qc5jhUQtAuLDLoGrBqk0B3DPB9Pc6AQ=
 github.com/tinywasm/time v0.5.3/go.mod h1:eVM+AbLPG/+yE6ZupaqUDrnmWmhdpyPO9imtu0/PjQw=
 github.com/tinywasm/unixid v0.2.26 h1:eU5VLSegyf9Np6dtbQssI5MVkU914cZyfTI4KnmAyOw=
