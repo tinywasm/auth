@@ -13,7 +13,7 @@ require (
 	github.com/tinywasm/json v0.5.23
 	github.com/tinywasm/jwt v0.1.16
 	github.com/tinywasm/model v0.1.7
-	github.com/tinywasm/orm v0.11.10
+	github.com/tinywasm/orm v0.12.0
 	github.com/tinywasm/router v0.1.29
 	github.com/tinywasm/server v0.2.43
 	github.com/tinywasm/sqlite v0.3.2
