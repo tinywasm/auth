@@ -8,7 +8,7 @@ require (
 	github.com/tinywasm/events v0.0.2
 	github.com/tinywasm/fetch v0.1.27
 	github.com/tinywasm/fmt v0.25.7
-	github.com/tinywasm/form v0.3.36
+	github.com/tinywasm/form v0.4.0
 	github.com/tinywasm/input v0.0.5
 	github.com/tinywasm/json v0.5.23
 	github.com/tinywasm/jwt v0.1.16
@@ -35,7 +35,7 @@ require (
 	github.com/tinywasm/dom v0.13.5 // indirect
 	github.com/tinywasm/sqlt v0.0.8 // indirect
 	github.com/tinywasm/storage v0.0.6 // indirect
-	github.com/tinywasm/widget v0.6.17 // indirect
+	github.com/tinywasm/widget v0.6.18 // indirect
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
