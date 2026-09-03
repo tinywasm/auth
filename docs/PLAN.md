@@ -2,6 +2,8 @@
 PLAN: "fix(security): unguessable session ids and OAuth state, browser-bound state, verified-email account linking"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 1762050602235269895
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: `agents-workflow`.
