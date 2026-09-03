@@ -68,6 +68,44 @@ configured slice, rejects unknown/empty with a deterministic 400, resolves or
 creates the identity through `SubjectStore`, calls `SessionIssuer.IssueSession`,
 and redirects to `AfterLogin`. It never assigns roles.
 
+## Credenciales portadoras
+
+Cualquier valor en el sistema que actúe como credencial portadora ( bearer credential ) debe ser completamente impredecible y generarse mediante el CSPRNG del ecosistema (`github.com/tinywasm/crypto/rand`). No se utilizan generadores de identificadores correlativos o basados en tiempo (`ids`) para este tipo de valores.
+
+| Campo / Valor | Origen de Aleatoriedad | Razón |
+|---|---|---|
+| `User.Id` | `ids` (`unixid`) | Clave primaria interna, no viaja como credencial. |
+| `Identity.Id` | `ids` (`unixid`) | Clave primaria interna de relación con proveedor. |
+| `LANIP.Id` | `ids` (`unixid`) | Clave primaria interna de IP permitida. |
+| `Session.Id` | `rand` (`SecretN(32)`) | Credencial portadora enviada en la cookie de sesión. |
+| `OAuthState.State` | `rand` (`SecretN(32)`) | Token anti-CSRF enviado al proveedor OAuth. |
+| OAuth Nonce | `rand` (`SecretN(32)`) | Token ligado al navegador enviado en cookie `oauth_nonce`. |
+
+## El intercambio OAuth
+
+Para prevenir ataques de login-CSRF (donde un atacante fuerza a una víctima a consumir el `code` del propio atacante), el parámetro `state` enviado al proveedor de identidad se vincula de forma estricta al navegador que inició la sesión mediante un `nonce` en cookie.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Browser as Navegador Víctima
+    participant App as /oauth/<provider>
+    participant DB as OAuthState Store
+    participant Prov as Proveedor OAuth
+
+    Browser->>App: GET /oauth/google
+    App->>App: Genera state + nonce con CSPRNG (32 bytes)
+    App->>DB: Guarda state y HMAC-SHA256(state, nonce)
+    App-->>Browser: 302 a Proveedor + Cookie oauth_nonce (SameSite=Lax)
+    Browser->>Prov: Autenticación en Proveedor
+    Prov-->>Browser: 302 a /oauth/callback/google?state=...&code=...
+    Browser->>App: GET /oauth/callback/google?state=...&code=... + Cookie oauth_nonce
+    App->>DB: Busca state, borra fila inmediatamente (single-use)
+    App->>App: Verifica provider + HMAC(state, nonce) en tiempo constante
+    App->>Prov: ExchangeCode(code) + GetUserInfo(token)
+    App-->>Browser: 302 Post-login + Cookie de sesión
+```
+
 ## Security Events
 
 All modes report `SecurityEvent` on `TopicSecurity = "auth.security"` via the

@@ -359,6 +359,7 @@ func (m *LANIP) SchemaExt() []model.FieldExt {
 
 type OAuthState struct {
 	State string
+	NonceHash string
 	Provider string
 	ExpiresAt int64
 	CreatedAt int64
@@ -368,12 +369,13 @@ func (m *OAuthState) ModelName() string { return "oauth_state" }
 
 func (m *OAuthState) Schema() []model.Field { return OAuthStateModel.Fields }
 
-func (m *OAuthState) Pointers() []any { return []any{&m.State, &m.Provider, &m.ExpiresAt, &m.CreatedAt} }
+func (m *OAuthState) Pointers() []any { return []any{&m.State, &m.NonceHash, &m.Provider, &m.ExpiresAt, &m.CreatedAt} }
 
 func (m *OAuthState) IsNil() bool { return m == nil }
 
 func (m *OAuthState) EncodeFields(w model.FieldWriter) {
 	w.String("state", m.State)
+	w.String("nonce_hash", m.NonceHash)
 	w.String("provider", m.Provider)
 	w.Int("expires_at", m.ExpiresAt)
 	w.Int("created_at", m.CreatedAt)
@@ -381,6 +383,7 @@ func (m *OAuthState) EncodeFields(w model.FieldWriter) {
 
 func (m *OAuthState) DecodeFields(r model.FieldReader) {
 	if v, ok := r.String("state"); ok { m.State = v }
+	if v, ok := r.String("nonce_hash"); ok { m.NonceHash = v }
 	if v, ok := r.String("provider"); ok { m.Provider = v }
 	if v, ok := r.Int("expires_at"); ok { m.ExpiresAt = v }
 	if v, ok := r.Int("created_at"); ok { m.CreatedAt = v }
@@ -403,11 +406,13 @@ func (m *OAuthState) Validate(action byte) error {
 
 var OAuthState_ = struct {
 	State string
+	NonceHash string
 	Provider string
 	ExpiresAt string
 	CreatedAt string
 }{
 	State: "state",
+	NonceHash: "nonce_hash",
 	Provider: "provider",
 	ExpiresAt: "expires_at",
 	CreatedAt: "created_at",

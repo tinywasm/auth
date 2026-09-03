@@ -88,10 +88,14 @@ func (p *MicrosoftProvider) GetUserInfo(token auth.OAuthToken) (auth.OAuthUserIn
 			if email == "" {
 				email = data.UserPrincipalName
 			}
+			// Note: Microsoft Graph /v1.0/me API does not expose a verified email
+			// field, so EmailVerified remains false by default. This closed default
+			// prevents unverified account linking.
 			res = auth.OAuthUserInfo{
-				ID:    data.ID,
-				Email: email,
-				Name:  data.Name,
+				ID:            data.ID,
+				Email:         email,
+				EmailVerified: false,
+				Name:          data.Name,
 			}
 		})
 

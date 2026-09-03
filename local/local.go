@@ -107,12 +107,12 @@ func (a *Authenticator) Mount(r router.Router) {
 		subj, err := a.store.GetOrCreateSubject(sc.ID, sc.Email, sc.Name, sc.Avatar)
 		if err != nil {
 			ctx.WriteStatus(500)
-			_, _ = ctx.Write([]byte(err.Error()))
+			_, _ = ctx.Write([]byte("authentication failed"))
 			return
 		}
 		if err := a.issuer.IssueSession(ctx, string(subj.ID)); err != nil {
 			ctx.WriteStatus(500)
-			_, _ = ctx.Write([]byte(err.Error()))
+			_, _ = ctx.Write([]byte("authentication failed"))
 			return
 		}
 		ctx.SetHeader("Location", afterLogin)

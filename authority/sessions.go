@@ -3,11 +3,24 @@ package authority
 import (
 	"sync"
 
+	"github.com/tinywasm/crypto/rand"
 	"github.com/tinywasm/time"
 
 	"github.com/tinywasm/orm"
 	"github.com/tinywasm/auth"
 )
+
+// sessionIDBytes: 32 bytes = 256 bits de entropía para el id de sesión. Un id
+// de sesión NO es una clave primaria más: es la credencial que viaja en el
+// cookie, así que se genera con el CSPRNG y no con el generador de ids
+// correlativos del módulo — ese produce timestamps enumerables.
+const sessionIDBytes = 32
+
+// maxCacheSessions acota el caché de sesiones igual que maxCacheUsers acota
+// el de usuarios: un isolate de larga vida no puede crecer sin techo. El
+// desalojo FIFO sólo cuesta una lectura de base en el próximo GetSession —
+// el caché es de lectura-a-través, no la fuente de verdad.
+const maxCacheSessions = 1000
 
 type sessionItem struct {
 	key string
@@ -21,7 +34,7 @@ type sessionCache struct {
 
 func newSessionCache() *sessionCache {
 	return &sessionCache{
-		items: make([]sessionItem, 0),
+		items: make([]sessionItem, 0, maxCacheSessions),
 	}
 }
 
@@ -33,6 +46,9 @@ func (c *sessionCache) set(id string, s auth.Session) {
 			c.items[i].val = s
 			return
 		}
+	}
+	if len(c.items) >= maxCacheSessions {
+		c.items = c.items[1:]
 	}
 	c.items = append(c.items, sessionItem{key: id, val: s})
 }
@@ -82,9 +98,14 @@ func (m *Module) CreateSession(userID, ip, userAgent string) (auth.Session, erro
 		ttl = 86400
 	}
 
+	id, err := rand.SecretN(sessionIDBytes)
+	if err != nil {
+		return auth.Session{}, err
+	}
+
 	now := time.Now() / 1e9
 	sess := auth.Session{
-		Id:        m.ids.NewID(),
+		Id:        id,
 		UserId:    userID,
 		ExpiresAt: now + int64(ttl),
 		Ip:        ip,
