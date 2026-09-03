@@ -111,8 +111,9 @@ func TestNewView(t *testing.T) {
 	if fc.lastOp != auth.OpUpsertUser {
 		t.Errorf("expected %s op on save, got %s", auth.OpUpsertUser, fc.lastOp)
 	}
-	savedUser, ok := fc.lastArgs.(*auth.User)
-	if !ok || savedUser.Name != "Updated Via Presenter" {
+	recs := savedRecords(fc.lastArgs)
+	savedUser, ok := recs[0].(*auth.User)
+	if len(recs) != 1 || !ok || savedUser.Name != "Updated Via Presenter" {
 		t.Errorf("wrong payload saved: %+v", fc.lastArgs)
 	}
 
@@ -125,8 +126,8 @@ func TestNewView(t *testing.T) {
 	if fc.lastOp != auth.OpDeleteUser {
 		t.Errorf("expected %s op on delete, got %s", auth.OpDeleteUser, fc.lastOp)
 	}
-	deletedUser, ok := fc.lastArgs.(*auth.User)
-	if !ok || deletedUser.Id != "u2" {
+	ids := deletedIDs(fc.lastArgs)
+	if len(ids) != 1 || ids[0] != "u2" {
 		t.Errorf("wrong payload deleted: %+v", fc.lastArgs)
 	}
 }
