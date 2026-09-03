@@ -3,7 +3,7 @@ module github.com/tinywasm/auth
 go 1.25.2
 
 require (
-	github.com/tinywasm/crypto v0.0.25
+	github.com/tinywasm/crypto v0.0.26
 	github.com/tinywasm/ddl v0.0.12
 	github.com/tinywasm/events v0.0.2
 	github.com/tinywasm/fetch v0.1.27

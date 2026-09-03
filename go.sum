@@ -17,8 +17,8 @@ github.com/smallstep/truststore v0.13.0 h1:90if9htAOblavbMeWlqNLnO9bsjjgVv2hQeQJ
 github.com/smallstep/truststore v0.13.0/go.mod h1:3tmMp2aLKZ/OA/jnFUB0cYPcho402UG2knuJoPh4j7A=
 github.com/tinywasm/base64 v0.0.5 h1:OuRGCuJrUzqo15jtotxs9PKL0mLuZmRHL6heUFaZZE4=
 github.com/tinywasm/base64 v0.0.5/go.mod h1:p6s8iOD4F6s6smO80R3bYd8ZGZQxXCBt+5KxFQ4vCHU=
-github.com/tinywasm/crypto v0.0.25 h1:9UMKMDuPB+7c4aQO0NNomf9iqGiTvJrbjhV8c1i+aYk=
-github.com/tinywasm/crypto v0.0.25/go.mod h1:LITXqjmbO3r2rECQ48DE8yzwXqAJhQLTbfbtX3RkN38=
+github.com/tinywasm/crypto v0.0.26 h1:ZAFsSzmkrnqOH9irx5sV8j2geomQrhs/mRTbUhyCqJk=
+github.com/tinywasm/crypto v0.0.26/go.mod h1:LITXqjmbO3r2rECQ48DE8yzwXqAJhQLTbfbtX3RkN38=
 github.com/tinywasm/ddl v0.0.12 h1:vIX4BdWyxgX9rxzXONerFjf9es60S+pqbFFc0yiMJQ8=
 github.com/tinywasm/ddl v0.0.12/go.mod h1:xY1lGWWzKq8wFecGzkz2bjBud5fE1yDp9kBa1dzYqns=
 github.com/tinywasm/dom v0.13.5 h1:CklQl/U/pJn5Pka3n5xf8xEObFLxuKxrrpXPLGiprWY=
