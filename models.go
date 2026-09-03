@@ -57,6 +57,7 @@ var OAuthStateModel = model.Definition{
 	Name: "oauth_state",
 	Fields: model.Fields{
 		{Name: "state", Type: model.Text(), DB: &model.FieldDB{PK: true}},
+		{Name: "nonce_hash", Type: model.Text()},
 		{Name: "provider", Type: model.Text()},
 		{Name: "expires_at", Type: model.Int()},
 		{Name: "created_at", Type: model.Int()},

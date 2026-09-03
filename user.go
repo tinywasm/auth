@@ -59,10 +59,11 @@ func (e *SecurityEvent) EncodeFields(w model.FieldWriter) {
 func (e *SecurityEvent) IsNil() bool { return e == nil }
 
 type OAuthUserInfo struct {
-	ID     string
-	Email  string
-	Name   string
-	Avatar string
+	ID            string
+	Email         string
+	Name          string
+	Avatar        string
+	EmailVerified bool
 }
 
 // OAuthToken is what a provider returns when it exchanges the code. It replaces
@@ -154,8 +155,16 @@ type IdentityStore interface {
 // StateStore is the anti-CSRF port the oauth2 mode uses for its one-time state
 // token. authority owns the oauth_state table; a mode never touches it directly.
 type StateStore interface {
-	CreateState(provider string) (state string, err error)
-	ConsumeState(state, provider string) error // single-use: deletes on read, validates provider+expiry
+	// CreateState devuelve el state (viaja en la URL del proveedor) y el nonce
+	// (viaja en una cookie del navegador). Los dos hacen falta para consumirlo:
+	// el state solo prueba que ALGUIEN inició un login, el nonce prueba que fue
+	// ESTE navegador. Sin el segundo, un atacante inicia el login, se queda con
+	// su propio code y empuja a la víctima al callback — la víctima termina con
+	// la sesión del atacante.
+	CreateState(provider string) (state, nonce string, err error)
+
+	// ConsumeState valida state+nonce y borra la fila. Single-use.
+	ConsumeState(state, nonce, provider string) error
 }
 
 // TrustedIPStore is the read-only port the trusted_ip mode uses to check whether

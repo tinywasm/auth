@@ -312,6 +312,9 @@ func testOAuth(t *testing.T) {
 		InMethod: "GET",
 		InPath:   "/oauth/callback/mock?state=" + state + "&code=mockcode",
 	}
+	if c, ok := ctxBegin.Cookie("oauth_nonce"); ok {
+		ctxCallback.SetCookie(c)
+	}
 	r.Invoke("GET", "/oauth/callback/mock", ctxCallback)
 	if ctxCallback.Status != 302 {
 		t.Fatalf("expected callback status 302, got %d", ctxCallback.Status)
@@ -341,6 +344,9 @@ func testOAuth(t *testing.T) {
 	ctxCallback2 := &mock.Context{
 		InMethod: "GET",
 		InPath:   "/oauth/callback/mock?state=" + state2 + "&code=mockcode",
+	}
+	if c, ok := ctxBegin2.Cookie("oauth_nonce"); ok {
+		ctxCallback2.SetCookie(c)
 	}
 	r.Invoke("GET", "/oauth/callback/mock", ctxCallback2)
 	if ctxCallback2.Status != 302 {

@@ -64,6 +64,9 @@ func TestOAuthRedirectURI_AllowedOverridesAfterLogin(t *testing.T) {
 	// by hand, standing in for what a real browser does automatically.
 	callback := &mock.Context{InPath: location}
 	callback.SetCookie(redirectCookie)
+	if nonceCookie, ok := start.Cookie("oauth_nonce"); ok {
+		callback.SetCookie(nonceCookie)
+	}
 	r.Invoke("GET", "/oauth/callback/google", callback)
 
 	if callback.Status != 302 {
@@ -103,6 +106,9 @@ func TestOAuthRedirectURI_DisallowedFallsBackToAfterLogin(t *testing.T) {
 	}
 
 	callback := &mock.Context{InPath: start.GetHeader("Location")}
+	if nonceCookie, ok := start.Cookie("oauth_nonce"); ok {
+		callback.SetCookie(nonceCookie)
+	}
 	r.Invoke("GET", "/oauth/callback/google", callback)
 
 	if got := callback.GetHeader("Location"); got != "/home" {
@@ -133,6 +139,9 @@ func TestOAuthRedirectURI_NoValidatorIgnoresParam(t *testing.T) {
 	}
 
 	callback := &mock.Context{InPath: start.GetHeader("Location")}
+	if nonceCookie, ok := start.Cookie("oauth_nonce"); ok {
+		callback.SetCookie(nonceCookie)
+	}
 	r.Invoke("GET", "/oauth/callback/google", callback)
 	if got := callback.GetHeader("Location"); got != auth.PathAfterLogin {
 		t.Errorf("Location: got %q, want the default PathAfterLogin %q", got, auth.PathAfterLogin)

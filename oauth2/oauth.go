@@ -1,9 +1,8 @@
 package oauth2
 
 import (
-	"github.com/tinywasm/fmt"
-	"github.com/tinywasm/router"
 	"github.com/tinywasm/auth"
+	"github.com/tinywasm/router"
 )
 
 type Authenticator struct {
@@ -59,6 +58,21 @@ func (a *Authenticator) provider(name string) auth.OAuthProvider {
 // provider), which Strict would drop.
 const oauthRedirectCookie = "oauth_redirect"
 
+// oauthNonceCookie lleva el nonce del state desde /oauth/<provider> hasta su
+// callback. SameSite=Lax como el cookie de redirect: el callback llega como
+// navegación top-level desde el sitio del proveedor, y Strict la descartaría.
+const oauthNonceCookie = "oauth_nonce"
+
+// oauthCookieMaxAge: 300 s. Un intercambio OAuth que tarda más de cinco
+// minutos ya no es un usuario, es un replay.
+const oauthCookieMaxAge = 300
+
+// bodyOAuthFailed es lo ÚNICO que el callback devuelve ante cualquier fallo.
+// Distinguir "state inválido" de "el proveedor rechazó el code" le dice al
+// atacante en qué paso está. Ver la misma doctrina en session/jwt/jwt.go
+// (errInvalidToken).
+const bodyOAuthFailed = "authentication failed"
+
 func (a *Authenticator) Mount(r router.Router) {
 	afterLogin := a.afterLogin
 	if afterLogin == "" {
@@ -69,16 +83,20 @@ func (a *Authenticator) Mount(r router.Router) {
 		providerName := p.Name()
 
 		r.Get(auth.PathOAuthStart(providerName), func(ctx router.Context) {
-			state, err := a.states.CreateState(providerName)
+			state, nonce, err := a.states.CreateState(providerName)
 			if err != nil {
 				ctx.WriteStatus(500)
 				return
 			}
+			ctx.SetCookie(router.Cookie{
+				Name: oauthNonceCookie, Value: nonce, HttpOnly: true, Secure: true,
+				SameSite: router.SameSiteLax, MaxAge: oauthCookieMaxAge, Path: "/",
+			})
 			if a.isAllowedRedirect != nil {
-				if redirectURI, ok := queryParam(ctx.Path(), "redirect_uri"); ok && a.isAllowedRedirect(redirectURI) {
+				if redirectURI, ok := router.QueryParam(ctx.Path(), "redirect_uri"); ok && a.isAllowedRedirect(redirectURI) {
 					ctx.SetCookie(router.Cookie{
 						Name: oauthRedirectCookie, Value: redirectURI, HttpOnly: true, Secure: true,
-						SameSite: router.SameSiteLax, MaxAge: 300, Path: "/",
+						SameSite: router.SameSiteLax, MaxAge: oauthCookieMaxAge, Path: "/",
 					})
 				}
 			}
@@ -87,12 +105,21 @@ func (a *Authenticator) Mount(r router.Router) {
 		}).Public()
 
 		r.Get(auth.PathOAuthCallback(providerName), func(ctx router.Context) {
-			state, _ := queryParam(ctx.Path(), "state")
-			code, _ := queryParam(ctx.Path(), "code")
+			state, _ := router.QueryParam(ctx.Path(), "state")
+			code, _ := router.QueryParam(ctx.Path(), "code")
 
-			if err := a.states.ConsumeState(state, providerName); err != nil {
+			var nonce string
+			if c, ok := ctx.Cookie(oauthNonceCookie); ok {
+				nonce = c.Value
+			}
+			ctx.SetCookie(router.Cookie{
+				Name: oauthNonceCookie, Value: "", HttpOnly: true, Secure: true,
+				SameSite: router.SameSiteLax, MaxAge: -1, Path: "/",
+			})
+
+			if err := a.states.ConsumeState(state, nonce, providerName); err != nil {
 				ctx.WriteStatus(401)
-				ctx.Write([]byte(auth.ErrInvalidOAuthState.Error()))
+				ctx.Write([]byte(bodyOAuthFailed))
 				return
 			}
 			prov := a.provider(providerName)
@@ -103,13 +130,13 @@ func (a *Authenticator) Mount(r router.Router) {
 			token, err := prov.ExchangeCode(code)
 			if err != nil {
 				ctx.WriteStatus(401)
-				ctx.Write([]byte(err.Error()))
+				ctx.Write([]byte(bodyOAuthFailed))
 				return
 			}
 			info, err := prov.GetUserInfo(token)
 			if err != nil {
 				ctx.WriteStatus(401)
-				ctx.Write([]byte(err.Error()))
+				ctx.Write([]byte(bodyOAuthFailed))
 				return
 			}
 
@@ -120,10 +147,28 @@ func (a *Authenticator) Mount(r router.Router) {
 					ctx.WriteStatus(500)
 					return
 				}
-			} else if existing, err := a.store.UserByEmail(info.Email); err == nil {
-				u = existing
-				_ = a.store.UpsertIdentity(u.Id, providerName, info.ID, info.Email)
+			} else if info.EmailVerified {
+				if existing, err := a.store.UserByEmail(info.Email); err == nil {
+					u = existing
+					_ = a.store.UpsertIdentity(u.Id, providerName, info.ID, info.Email)
+				} else {
+					created, err := a.store.CreateUser(info.Email, info.Name, "")
+					if err != nil {
+						ctx.WriteStatus(500)
+						return
+					}
+					u = created
+					_ = a.store.UpsertIdentity(u.Id, providerName, info.ID, info.Email)
+				}
 			} else {
+				if _, err := a.store.UserByEmail(info.Email); err == nil {
+					if notifier, ok := a.store.(auth.SecurityNotifier); ok {
+						notifier.Notify(auth.SecurityEvent{Type: auth.EventUnauthorizedAccess, Provider: providerName})
+					}
+					ctx.WriteStatus(401)
+					ctx.Write([]byte(bodyOAuthFailed))
+					return
+				}
 				created, err := a.store.CreateUser(info.Email, info.Name, "")
 				if err != nil {
 					ctx.WriteStatus(500)
@@ -158,25 +203,5 @@ func (a *Authenticator) Mount(r router.Router) {
 	}
 }
 
-// queryParam does a minimal, dependency-free extraction of one key from a
-// "path?k=v&k2=v2" string — the same manual parsing this handler already
-// used inline for state/code, now shared with redirect_uri. It does not
-// URL-decode values: every caller here controls what it puts in the query
-// (an opaque state token, an authorization code, or a redirect_uri this
-// package itself only ever received %-free from its own /oauth/<provider>
-// callers — see WithRedirectValidator's doc).
-func queryParam(path, key string) (string, bool) {
-	if !fmt.Contains(path, "?") {
-		return "", false
-	}
-	query := fmt.Split(path, "?")[1]
-	for _, part := range fmt.Split(query, "&") {
-		kv := fmt.Split(part, "=")
-		if len(kv) == 2 && kv[0] == key {
-			return kv[1], true
-		}
-	}
-	return "", false
-}
 
 var _ auth.Authenticator = (*Authenticator)(nil)

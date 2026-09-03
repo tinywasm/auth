@@ -313,7 +313,7 @@ func TestCoverage_OAuth2(t *testing.T) {
 	mockP := &MockProvider{
 		NameVal:         "covmock",
 		ExchangeCodeVal: auth.OAuthToken{AccessToken: "covtoken"},
-		UserInfoVal:     auth.OAuthUserInfo{ID: "cSubject", Email: "c@test.com", Name: "Cov OAuth User"},
+		UserInfoVal:     auth.OAuthUserInfo{ID: "cSubject", Email: "c@test.com", Name: "Cov OAuth User", EmailVerified: true},
 	}
 
 	r := &mock.Router{}
@@ -331,6 +331,9 @@ func TestCoverage_OAuth2(t *testing.T) {
 			InMethod: "GET",
 			InPath:   "/oauth/callback/covmock?state=" + state + "&code=mockcode",
 		}
+		if nonceCookie, ok := ctxBegin.Cookie("oauth_nonce"); ok {
+			ctxCallback1.SetCookie(nonceCookie)
+		}
 		r.Invoke("GET", "/oauth/callback/covmock", ctxCallback1)
 		if ctxCallback1.Status != 302 {
 			t.Fatalf("first callback failed: %d", ctxCallback1.Status)
@@ -340,6 +343,9 @@ func TestCoverage_OAuth2(t *testing.T) {
 		ctxCallback2 := &mock.Context{
 			InMethod: "GET",
 			InPath:   "/oauth/callback/covmock?state=" + state + "&code=mockcode",
+		}
+		if nonceCookie, ok := ctxBegin.Cookie("oauth_nonce"); ok {
+			ctxCallback2.SetCookie(nonceCookie)
 		}
 		r.Invoke("GET", "/oauth/callback/covmock", ctxCallback2)
 		if ctxCallback2.Status != 401 {
@@ -358,7 +364,7 @@ func TestCoverage_OAuth2(t *testing.T) {
 		mockP2 := &MockProvider{
 			NameVal:         "covmock2",
 			ExchangeCodeVal: auth.OAuthToken{AccessToken: "covtoken2"},
-			UserInfoVal:     auth.OAuthUserInfo{ID: "cSubject2", Email: "link@test.com", Name: "Same Email OAuth"},
+			UserInfoVal:     auth.OAuthUserInfo{ID: "cSubject2", Email: "link@test.com", Name: "Same Email OAuth", EmailVerified: true},
 		}
 
 		m.Enable(oauth2.New(m, m, m, []auth.OAuthProvider{mockP2}))
@@ -372,6 +378,9 @@ func TestCoverage_OAuth2(t *testing.T) {
 		ctxCallback := &mock.Context{
 			InMethod: "GET",
 			InPath:   "/oauth/callback/covmock2?state=" + state + "&code=mockcode",
+		}
+		if nonceCookie, ok := ctxBegin.Cookie("oauth_nonce"); ok {
+			ctxCallback.SetCookie(nonceCookie)
 		}
 		r.Invoke("GET", "/oauth/callback/covmock2", ctxCallback)
 		if ctxCallback.Status != 302 {
