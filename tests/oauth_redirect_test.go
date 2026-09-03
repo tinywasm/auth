@@ -147,3 +147,66 @@ func TestOAuthRedirectURI_NoValidatorIgnoresParam(t *testing.T) {
 		t.Errorf("Location: got %q, want the default PathAfterLogin %q", got, auth.PathAfterLogin)
 	}
 }
+
+// TestOAuthReadsEncodedRedirectURI proves /oauth/<provider> reads
+// redirect_uri through router.QueryParam, not the local hand-rolled parser
+// this package used to carry: a percent-encoded value (the shape a real
+// caller sends, since "://" is not a valid raw query character) must reach
+// isAllowedRedirect already decoded, or a legitimate redirect_uri never
+// validates.
+func TestOAuthReadsEncodedRedirectURI(t *testing.T) {
+	db := newTestDB(t)
+	m, err := authority.New(db, auth.Config{IDs: testIDs})
+	if err != nil {
+		t.Fatal(err)
+	}
+	prov := &googlemock.MockProvider{User: auth.OAuthUserInfo{ID: "g1", Email: "u@test.com", Name: "U"}}
+	m.Enable(oauth2.New(m, m, m, []auth.OAuthProvider{prov},
+		oauth2.WithRedirectValidator(isVeltyCl),
+	))
+
+	r := &mock.Router{}
+	m.MountAPI(r)
+
+	start := &mock.Context{InPath: "/oauth/google?redirect_uri=https%3A%2F%2Fmisitio.velty.cl%2Fpanel"}
+	r.Invoke("GET", "/oauth/google", start)
+
+	redirectCookie, ok := start.Cookie("oauth_redirect")
+	if !ok || redirectCookie.Value != "https://misitio.velty.cl/panel" {
+		t.Fatalf("oauth_redirect cookie: got %+v, ok=%v, want decoded https://misitio.velty.cl/panel", redirectCookie, ok)
+	}
+}
+
+// TestOAuthCallbackReadsStateAndCodeThroughRouterQueryParam proves the
+// callback resolves state and code via router.QueryParam rather than a
+// local parser: a state value adjacent to another query param on both
+// sides must still resolve to exactly its own value.
+func TestOAuthCallbackReadsStateAndCodeThroughRouterQueryParam(t *testing.T) {
+	db := newTestDB(t)
+	m, err := authority.New(db, auth.Config{IDs: testIDs})
+	if err != nil {
+		t.Fatal(err)
+	}
+	prov := &googlemock.MockProvider{User: auth.OAuthUserInfo{ID: "g1", Email: "u@test.com", Name: "U"}}
+	m.Enable(oauth2.New(m, m, m, []auth.OAuthProvider{prov}))
+
+	r := &mock.Router{}
+	m.MountAPI(r)
+
+	start := &mock.Context{InPath: "/oauth/google"}
+	r.Invoke("GET", "/oauth/google", start)
+	location := start.GetHeader("Location")
+
+	// Append an extra param on both sides of state/code, the way a real
+	// query string composes several parameters — a parser that mishandles
+	// boundaries would clip or merge one of them.
+	callback := &mock.Context{InPath: location + "&extra=1"}
+	if nonceCookie, ok := start.Cookie("oauth_nonce"); ok {
+		callback.SetCookie(nonceCookie)
+	}
+	r.Invoke("GET", "/oauth/callback/google", callback)
+
+	if callback.Status != 302 {
+		t.Fatalf("callback status: got %d, want 302 (state/code resolved correctly)", callback.Status)
+	}
+}
