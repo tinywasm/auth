@@ -21,7 +21,7 @@ require (
 	github.com/tinywasm/time v0.5.4
 	github.com/tinywasm/unixid v0.2.26
 	github.com/tinywasm/user v0.3.11
-	github.com/tinywasm/view v0.4.0
+	github.com/tinywasm/view v0.5.1
 	modernc.org/sqlite v1.57.0
 )
 

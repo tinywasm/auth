@@ -9,7 +9,7 @@ import (
 // NewView builds the user-administration Presenter — the tech-agnostic engine a
 // renderer (crudview, or any other) wraps. The app decides which renderer draws it.
 func NewView(caller router.Caller) view.Presenter {
-	b := view.NewCallerBackend(caller,
+	b := view.NewCallerLister(caller,
 		view.Ops{List: OpListUsers, Save: OpUpsertUser, Delete: OpDeleteUser},
 		func() model.ModelSlice { return &UserList{} })
 	return view.New(b, &User{}, view.WithTitle("Usuarios"))
